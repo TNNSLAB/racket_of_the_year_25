@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Best Tennis Racket of 2025</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+
+  <div class="flex flex-col items-center min-h-screen py-8 space-y-6">
+
+    <!-- Background selection -->
+    <div class="flex flex-col space-y-4 w-64">
+      <select id="background-select" class="w-full px-4 py-2 border border-gray-300 rounded shadow">
+        <option value="round1.png">Round 1</option>
+        <option value="round2.png">Round 2</option>
+        <option value="quarterfinal.png">Quarter Final</option>
+        <option value="semifinal.png">Semi Final</option>
+        <option value="final.png">Final</option>
+      </select>
+    </div>
+
+    <!-- Racket dropdowns -->
+    <div class="flex flex-col space-y-4 w-64">
+      <select id="racket1-select" class="w-full px-4 py-2 border border-gray-300 rounded shadow">
+        <option value="">Select first racket</option>
+      </select>
+
+      <select id="racket2-select" class="w-full px-4 py-2 border border-gray-300 rounded shadow">
+        <option value="">Select second racket</option>
+      </select>
+    </div>
+
+    <!-- Template display container -->
+    <div id="canvas-container" class="relative border shadow-lg w-full max-w-md">
+      <img id="template" 
+           src="images/round1.png" 
+           alt="Template" 
+           class="pointer-events-none select-none" 
+           style="width:100%; height:auto; display:block;">
+      <div id="racket-layer" class="absolute top-0 left-0 w-full h-full"></div>
+    </div>
+
+    <!-- Download Button -->
+    <button id="download-btn" class="px-6 py-2 bg-blue-600 text-white rounded shadow hover:bg-blue-700">
+      Download Image
+    </button>
+  </div>
+
+  <script>
+    const BASE_WIDTH = 1080;
+    const BASE_HEIGHT = 1920;
+
+    // Racket placement boxes
+    const racketBox1 = { x: 150, y: 411, width: 379, height: 625 }; // From your coordinates
+    const racketBox2 = { x: 550, y: 415, width: 382, height: 606 };
+
+    // Racket data
+    const rackets = [
+      { name: "Wilson Pro Staff 97 v14", image: "images/1.jpg" },
+      { name: "Babolat Pure Drive 2025", image: "images/2.jpg" }
+    ];
+
+    const backgroundSelect = document.getElementById('background-select');
+    const racket1Select = document.getElementById('racket1-select');
+    const racket2Select = document.getElementById('racket2-select');
+    const racketLayer = document.getElementById('racket-layer');
+    const templateImg = document.getElementById('template');
+
+    // Populate racket dropdowns
+    rackets.forEach((racket, index) => {
+      const option1 = document.createElement('option');
+      option1.value = index;
+      option1.textContent = racket.name;
+      racket1Select.appendChild(option1);
+
+      const option2 = document.createElement('option');
+      option2.value = index;
+      option2.textContent = racket.name;
+      racket2Select.appendChild(option2);
+    });
+
+    // Update template when background changes
+    backgroundSelect.addEventListener('change', () => {
+      templateImg.src = `images/${backgroundSelect.value}`;
+      updateDisplay();
+    });
+
+    function placeRacket(displayIndex, box) {
+      if (displayIndex === "") return null;
+
+      const img = document.createElement('img');
+      img.src = rackets[displayIndex].image;
+      img.className = 'absolute';
+
+      const displayImg = new Image();
+      displayImg.src = rackets[displayIndex].image;
+      displayImg.onload = () => {
+        const scale = templateImg.clientWidth / BASE_WIDTH;
+
+        const displayX = box.x * scale;
+        const displayY = box.y * scale;
+
+        // Scale display proportionally to template
+        const displayWidth = displayImg.width * scale;
+        const displayHeight = displayImg.height * scale;
+
+        img.style.width = `${displayWidth}px`;
+        img.style.height = `${displayHeight}px`;
+        img.style.left = `${displayX}px`;
+        img.style.top = `${displayY}px`;
+
+        racketLayer.appendChild(img);
+      };
+      return img;
+    }
+
+    function updateDisplay() {
+      racketLayer.innerHTML = '';
+      placeRacket(racket1Select.value, racketBox1);
+      placeRacket(racket2Select.value, racketBox2);
+    }
+
+    racket1Select.addEventListener('change', updateDisplay);
+    racket2Select.addEventListener('change', updateDisplay);
+    window.addEventListener('resize', updateDisplay);
+
+    // Download full-size image
+    document.getElementById('download-btn').addEventListener('click', () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = BASE_WIDTH;
+      canvas.height = BASE_HEIGHT;
+      const ctx = canvas.getContext('2d');
+
+      const template = new Image();
+      template.src = `images/${backgroundSelect.value}`;
+      template.onload = () => {
+        ctx.drawImage(template, 0, 0, BASE_WIDTH, BASE_HEIGHT);
+
+        const selectedIndex1 = racket1Select.value;
+        const selectedIndex2 = racket2Select.value;
+
+        function drawRacket(index, box, callback) {
+          if (index === "") { callback(); return; }
+          const racket = new Image();
+          racket.src = rackets[index].image;
+          racket.onload = () => {
+            ctx.drawImage(racket, box.x, box.y, racket.width, racket.height);
+            callback();
+          };
+        }
+
+        drawRacket(selectedIndex1, racketBox1, () => {
+          drawRacket(selectedIndex2, racketBox2, () => {
+            const link = document.createElement('a');
+            link.download = 'racket-placement.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+          });
+        });
+      };
+    });
+  </script>
+
+</body>
+</html>
