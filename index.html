@@ -1,190 +1,1993 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
+
   <title>Best Tennis Racket of 2025</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1"
+  >
+
   <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+
+    * {
+      box-sizing: border-box;
+    }
+
+    #canvas-container {
+      position: relative;
+    }
+
+    #racket-layer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    .racket-image {
+      position: absolute;
+      display: block;
+      pointer-events: none;
+      user-select: none;
+    }
+
+    .management-list {
+      max-height: 500px;
+      overflow-y: auto;
+    }
+
+  </style>
+
 </head>
+
+
 <body class="bg-gray-100">
 
-  <div class="flex flex-col items-center min-h-screen py-8 space-y-6">
 
-    <!-- Background selection -->
-    <div class="flex flex-col space-y-4 w-64">
-      <select id="background-select" class="w-full px-4 py-2 border border-gray-300 rounded shadow">
-        <option value="round1.png">Round 1</option>
-        <option value="round2.png">Round 2</option>
-        <option value="quarterfinal.png">Quarter Final</option>
-        <option value="semifinal.png">Semi Final</option>
-        <option value="final.png">Final</option>
-      </select>
+<div class="flex flex-col items-center min-h-screen py-8 px-4 space-y-6">
+
+
+  <!-- ========================================================
+       TITLE
+  ========================================================= -->
+
+  <h1 class="text-2xl font-bold text-gray-800">
+    Tennis Racket Tournament
+  </h1>
+
+
+
+  <!-- ========================================================
+       TOURNAMENT MANAGEMENT
+  ========================================================= -->
+
+  <div class="w-full max-w-md bg-white rounded-lg shadow p-5">
+
+    <h2 class="text-xl font-bold mb-2">
+      Tournament Management
+    </h2>
+
+    <p class="text-sm text-gray-500 mb-4">
+      Uncheck a racket to eliminate it from the selected round.
+      Changes are saved automatically.
+    </p>
+
+
+    <!-- ROUND SELECTOR -->
+
+    <label
+      class="block text-sm font-medium text-gray-700 mb-2"
+    >
+      Managing round
+    </label>
+
+    <select
+      id="management-round"
+      class="w-full px-4 py-2 border border-gray-300 rounded shadow mb-4"
+    >
+
+      <option value="round1">
+        Round 1
+      </option>
+
+      <option value="round2">
+        Round 2
+      </option>
+
+      <option value="quarterfinal">
+        Quarter Final
+      </option>
+
+      <option value="semifinal">
+        Semi Final
+      </option>
+
+      <option value="final">
+        Final
+      </option>
+
+    </select>
+
+
+    <!-- REMAINING COUNT -->
+
+    <div
+      id="remaining-count"
+      class="mb-3 text-sm font-semibold text-blue-600"
+    ></div>
+
+
+    <!-- SELECT / DESELECT -->
+
+    <div class="flex gap-2 mb-3">
+
+      <button
+        id="select-all"
+        type="button"
+        class="flex-1 px-3 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+      >
+        Select All
+      </button>
+
+
+      <button
+        id="deselect-all"
+        type="button"
+        class="flex-1 px-3 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
+      >
+        Deselect All
+      </button>
+
     </div>
 
-    <!-- Racket dropdowns -->
-    <div class="flex flex-col space-y-4 w-64">
-      <select id="racket1-select" class="w-full px-4 py-2 border border-gray-300 rounded shadow">
-        <option value="">Select first racket</option>
-      </select>
 
-      <select id="racket2-select" class="w-full px-4 py-2 border border-gray-300 rounded shadow">
-        <option value="">Select second racket</option>
-      </select>
-    </div>
+    <!-- RACKET LIST -->
 
-    <!-- Template display container -->
-    <div id="canvas-container" class="relative border shadow-lg w-full max-w-md">
-      <img id="template" 
-           src="images/round1.png" 
-           alt="Template" 
-           class="pointer-events-none select-none" 
-           style="width:100%; height:auto; display:block;">
-      <div id="racket-layer" class="absolute top-0 left-0 w-full h-full"></div>
-    </div>
+    <div
+      id="management-list"
+      class="management-list border rounded"
+    ></div>
 
-    <!-- Download Button -->
-    <button id="download-btn" class="px-6 py-2 bg-blue-600 text-white rounded shadow hover:bg-blue-700">
-      Download Image
+
+    <!-- RESET -->
+
+    <button
+      id="reset-tournament"
+      type="button"
+      class="mt-4 w-full px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+    >
+      Reset Tournament
     </button>
+
   </div>
 
-  <script>
-    const BASE_WIDTH = 1080;
-    const BASE_HEIGHT = 1920;
 
-    // Racket placement boxes
-    const racketBox1 = { x: 150, y: 411, width: 379, height: 625 }; // From your coordinates
-    const racketBox2 = { x: 550, y: 415, width: 382, height: 606 };
 
-    // Racket data
-    const rackets = [
-      { name: "Yonex Percept", image: "images/YonexPercept.jpg" },
-      { name: "Yonex Vcore", image: "images/YonexVcore.jpg" },
-      { name: "Head Prestige", image: "images/HeadPrestige.jpg" },
-      { name: "Tecnifibre TF40", image: "images/TecnifibreTF40.jpg" },
-      { name: "Wilson RF01", image: "images/WilsonRF01.jpg" },
-      { name: "Babolat Pure Aero Rafa", image: "images/BabolatPureAeroRafa.jpg" },
-      { name: "Solinco Blackout V2", image: "images/SolincoBlackoutV2.jpg" },
-      { name: "Solinco Whiteout", image: "images/SolincoWhiteout.jpg" },
-      { name: "Dunlop FX500", image: "images/DunlopFX500.jpg" },
-      { name: "Dunlop SX300", image: "images/DunlopSX300.jpg" },
-      { name: "Head Gravity", image: "images/HeadGravity.jpg" },
-      { name: "Wilson Clash", image: "images/WilsonClash.jpg" },
-      { name: "Wilson Shift", image: "images/WilsonShift.jpg" },
-      { name: "Tecnifibre Tfight", image: "images/TecnifibreTfight.jpg" },
-      { name: "Head Boom", image: "images/HeadBoom.jpg" },
-      { name: "Yonex Ezone", image: "images/YonexEzone.jpg" },
-      { name: "Babolat Pure Aero", image: "images/babolatpureaero.jpg" },
-      { name: "Babolat Pure Strike", image: "images/babolatpurestrike.jpg" },
-      { name: "Head Radical", image: "images/headradical.jpg" },
-      { name: "Head Speed", image: "images/headspeed.jpg" },
-      { name: "Wilson Pro Staff", image: "images/wilsonprostaff.jpg" },
-      { name: "Babolat Pure Drive", image: "images/babolatpuredrive.jpg" },
-      { name: "Wilson Blade", image: "images/wilsonblade.jpg" },
-      { name: "Wilson Ultra99 Pro", image: "images/wilsonultra99prov5.jpg" },
-      { name: "Head Extreme Pro 2024", image: "images/headextremepro2024.jpg" }
-    ];
+  <!-- ========================================================
+       BACKGROUND
+  ========================================================= -->
 
-    const backgroundSelect = document.getElementById('background-select');
-    const racket1Select = document.getElementById('racket1-select');
-    const racket2Select = document.getElementById('racket2-select');
-    const racketLayer = document.getElementById('racket-layer');
-    const templateImg = document.getElementById('template');
+  <div class="flex flex-col space-y-2 w-64">
 
-    // Populate racket dropdowns
-    rackets.forEach((racket, index) => {
-      const option1 = document.createElement('option');
-      option1.value = index;
-      option1.textContent = racket.name;
-      racket1Select.appendChild(option1);
+    <label
+      class="text-sm font-medium text-gray-700"
+    >
+      Background
+    </label>
 
-      const option2 = document.createElement('option');
-      option2.value = index;
-      option2.textContent = racket.name;
-      racket2Select.appendChild(option2);
-    });
 
-    // Update template when background changes
-    backgroundSelect.addEventListener('change', () => {
-      templateImg.src = `images/${backgroundSelect.value}`;
-      updateDisplay();
-    });
+    <select
+      id="background-select"
+      class="w-full px-4 py-2 border border-gray-300 rounded shadow"
+    >
 
-    function placeRacket(displayIndex, box) {
-      if (displayIndex === "") return null;
+      <option value="round1.png">
+        Round 1
+      </option>
 
-      const img = document.createElement('img');
-      img.src = rackets[displayIndex].image;
-      img.className = 'absolute';
+      <option value="round2.png">
+        Round 2
+      </option>
 
-      const displayImg = new Image();
-      displayImg.src = rackets[displayIndex].image;
-      displayImg.onload = () => {
-        const scale = templateImg.clientWidth / BASE_WIDTH;
+      <option value="quarterfinal.png">
+        Quarter Final
+      </option>
 
-        const displayX = box.x * scale;
-        const displayY = box.y * scale;
+      <option value="semifinal.png">
+        Semi Final
+      </option>
 
-        // Scale display proportionally to template
-        const displayWidth = displayImg.width * scale;
-        const displayHeight = displayImg.height * scale;
+      <option value="final.png">
+        Final
+      </option>
 
-        img.style.width = `${displayWidth}px`;
-        img.style.height = `${displayHeight}px`;
-        img.style.left = `${displayX}px`;
-        img.style.top = `${displayY}px`;
+    </select>
 
-        racketLayer.appendChild(img);
-      };
-      return img;
+  </div>
+
+
+
+  <!-- ========================================================
+       RACKET SELECTION
+  ========================================================= -->
+
+  <div class="flex flex-col space-y-4 w-64">
+
+
+    <select
+      id="racket1-select"
+      class="w-full px-4 py-2 border border-gray-300 rounded shadow"
+    >
+
+      <option value="">
+        Select first racket
+      </option>
+
+    </select>
+
+
+    <select
+      id="racket2-select"
+      class="w-full px-4 py-2 border border-gray-300 rounded shadow"
+    >
+
+      <option value="">
+        Select second racket
+      </option>
+
+    </select>
+
+
+  </div>
+
+
+
+  <!-- ========================================================
+       TEMPLATE
+  ========================================================= -->
+
+  <div
+    id="canvas-container"
+    class="relative border shadow-lg w-full max-w-md"
+  >
+
+    <img
+      id="template"
+      src="images/round1.png"
+      alt="Template"
+      class="pointer-events-none select-none"
+      style="
+        width:100%;
+        height:auto;
+        display:block;
+      "
+    >
+
+
+    <div id="racket-layer"></div>
+
+  </div>
+
+
+
+  <!-- ========================================================
+       DOWNLOAD
+  ========================================================= -->
+
+  <button
+    id="download-btn"
+    class="px-6 py-2 bg-blue-600 text-white rounded shadow hover:bg-blue-700"
+  >
+    Download Image
+  </button>
+
+
+</div>
+
+
+
+<script>
+
+
+/* ============================================================
+   TEMPLATE SIZE
+============================================================ */
+
+const BASE_WIDTH = 1080;
+
+const BASE_HEIGHT = 1920;
+
+
+
+/* ============================================================
+   STANDARD RACKET IMAGE SIZE
+============================================================ */
+
+const STANDARD_RACKET_WIDTH = 375;
+
+const STANDARD_RACKET_HEIGHT = 500;
+
+
+
+/* ============================================================
+   RACKET BOXES
+============================================================ */
+
+const racketBox1 = {
+
+  x: 150,
+
+  y: 411,
+
+  width: 379,
+
+  height: 525
+
+};
+
+
+const racketBox2 = {
+
+  x: 550,
+
+  y: 415,
+
+  width: 382,
+
+  height: 506
+
+};
+
+
+
+/* ============================================================
+   RACKET DATA
+============================================================ */
+
+const rackets = [
+
+  {
+    name: "Babolat Pure Aero",
+    image: "images/BabolatPureAero.jpg"
+  },
+
+  {
+    name: "Babolat Pure Aero Rafa",
+    image: "images/BabolatPureAeroRafa.jpg"
+  },
+
+  {
+    name: "Babolat Pure Drive",
+    image: "images/BabolatPureDrive.jpg"
+  },
+
+  {
+    name: "Babolat Pure Strike",
+    image: "images/BabolatPureStrike.jpg"
+  },
+
+  {
+    name: "Dunlop FX 500",
+    image: "images/DunlopFX500.jpg"
+  },
+
+  {
+    name: "Dunlop SX 300",
+    image: "images/DunlopSX300.jpg"
+  },
+
+  {
+    name: "Functional Tennis",
+    image: "images/FunctionalTennis.jpg"
+  },
+
+  {
+    name: "Head Boom",
+    image: "images/HeadBoom.jpg"
+  },
+
+  {
+    name: "Head Extreme",
+    image: "images/HeadExtreme.jpg"
+  },
+
+  {
+    name: "Head Gravity",
+    image: "images/HeadGravity.jpg"
+  },
+
+  {
+    name: "Head Prestige",
+    image: "images/HeadPrestige.jpg"
+  },
+
+  {
+    name: "Head Radical",
+    image: "images/HeadRadical.jpg"
+  },
+
+  {
+    name: "Head Speed",
+    image: "images/HeadSpeed.jpg"
+  },
+
+  {
+    name: "Prince Tour",
+    image: "images/PrinceTour.jpg"
+  },
+
+  {
+    name: "Solinco Blackout v2",
+    image: "images/SolincoBlackoutv2.jpg"
+  },
+
+  {
+    name: "Solinco Whiteout v2",
+    image: "images/SolincoWhiteoutv2.jpg"
+  },
+
+  {
+    name: "Tecnifibre Fire",
+    image: "images/TecnifibreFire.jpg"
+  },
+
+  {
+    name: "Tecnifibre TFight",
+    image: "images/TecnifibreTFight.jpg"
+  },
+
+  {
+    name: "Wilson Blade",
+    image: "images/WilsonBlade.jpg"
+  },
+
+  {
+    name: "Wilson Clash",
+    image: "images/WilsonClash.jpg"
+  },
+
+  {
+    name: "Wilson Defyer",
+    image: "images/WilsonDefyer.jpg"
+  },
+
+  {
+    name: "Wilson Pro Staff",
+    image: "images/WilsonProStaff.jpg"
+  },
+
+  {
+    name: "Wilson RF 01",
+    image: "images/WilsonRF01.jpg"
+  },
+
+  {
+    name: "Wilson Ultra",
+    image: "images/WilsonUltra.jpg"
+  },
+
+  {
+    name: "Yonex Ezone",
+    image: "images/YonexEzone.jpg"
+  },
+
+  {
+    name: "Yonex Muse",
+    image: "images/YonexMuse.jpg"
+  },
+
+  {
+    name: "Yonex Percept",
+    image: "images/YonexPercept.jpg"
+  },
+
+  {
+    name: "Yonex VCORE",
+    image: "images/YonexVCORE.jpg"
+  }
+
+];
+
+
+
+/* ============================================================
+   GET ELEMENTS
+============================================================ */
+
+const backgroundSelect =
+  document.getElementById(
+    "background-select"
+  );
+
+
+const racket1Select =
+  document.getElementById(
+    "racket1-select"
+  );
+
+
+const racket2Select =
+  document.getElementById(
+    "racket2-select"
+  );
+
+
+const racketLayer =
+  document.getElementById(
+    "racket-layer"
+  );
+
+
+const templateImg =
+  document.getElementById(
+    "template"
+  );
+
+
+const managementRound =
+  document.getElementById(
+    "management-round"
+  );
+
+
+const managementList =
+  document.getElementById(
+    "management-list"
+  );
+
+
+const remainingCount =
+  document.getElementById(
+    "remaining-count"
+  );
+
+
+const resetButton =
+  document.getElementById(
+    "reset-tournament"
+  );
+
+
+const selectAllButton =
+  document.getElementById(
+    "select-all"
+  );
+
+
+const deselectAllButton =
+  document.getElementById(
+    "deselect-all"
+  );
+
+
+
+/* ============================================================
+   ROUND ORDER
+============================================================ */
+
+const rounds = [
+
+  "round1",
+
+  "round2",
+
+  "quarterfinal",
+
+  "semifinal",
+
+  "final"
+
+];
+
+
+
+/* ============================================================
+   TOURNAMENT STATE
+============================================================ */
+
+let tournamentState =
+  JSON.parse(
+    localStorage.getItem(
+      "tennisTournamentState"
+    )
+  );
+
+
+
+/* ============================================================
+   INITIALIZE TOURNAMENT
+============================================================ */
+
+function initializeTournament() {
+
+
+  if (!tournamentState) {
+
+    tournamentState = {};
+
+  }
+
+
+  rounds.forEach(
+    round => {
+
+
+      if (
+        !tournamentState[round]
+      ) {
+
+        tournamentState[round] = {};
+
+      }
+
+
+      rackets.forEach(
+        (_, index) => {
+
+
+          if (
+            tournamentState[
+              round
+            ][index] === undefined
+          ) {
+
+            tournamentState[
+              round
+            ][index] = true;
+
+          }
+
+        }
+      );
+
     }
+  );
 
-    function updateDisplay() {
-      racketLayer.innerHTML = '';
-      placeRacket(racket1Select.value, racketBox1);
-      placeRacket(racket2Select.value, racketBox2);
-    }
 
-    racket1Select.addEventListener('change', updateDisplay);
-    racket2Select.addEventListener('change', updateDisplay);
-    window.addEventListener('resize', updateDisplay);
+  saveTournament();
 
-    // Download full-size image
-    document.getElementById('download-btn').addEventListener('click', () => {
-      const canvas = document.createElement('canvas');
-      canvas.width = BASE_WIDTH;
-      canvas.height = BASE_HEIGHT;
-      const ctx = canvas.getContext('2d');
+}
 
-      const template = new Image();
-      template.src = `images/${backgroundSelect.value}`;
-      template.onload = () => {
-        ctx.drawImage(template, 0, 0, BASE_WIDTH, BASE_HEIGHT);
 
-        const selectedIndex1 = racket1Select.value;
-        const selectedIndex2 = racket2Select.value;
+function saveTournament() {
 
-        function drawRacket(index, box, callback) {
-          if (index === "") { callback(); return; }
-          const racket = new Image();
-          racket.src = rackets[index].image;
-          racket.onload = () => {
-            ctx.drawImage(racket, box.x, box.y, racket.width, racket.height);
-            callback();
-          };
+  localStorage.setItem(
+
+    "tennisTournamentState",
+
+    JSON.stringify(
+      tournamentState
+    )
+
+  );
+
+}
+
+
+initializeTournament();
+
+
+
+/* ============================================================
+   GET PREVIOUS ROUND
+============================================================ */
+
+function getPreviousRound(
+  currentRound
+) {
+
+
+  const index =
+    rounds.indexOf(
+      currentRound
+    );
+
+
+  if (index <= 0) {
+
+    return null;
+
+  }
+
+
+  return rounds[
+    index - 1
+  ];
+
+}
+
+
+
+/* ============================================================
+   GET RACKETS AVAILABLE FOR ROUND
+============================================================ */
+
+function getAvailableRackets(
+  round
+) {
+
+
+  const previousRound =
+    getPreviousRound(
+      round
+    );
+
+
+  /*
+  Round 1:
+
+  Everyone is available.
+  */
+
+  if (!previousRound) {
+
+    return rackets.map(
+      (_, index) => index
+    );
+
+  }
+
+
+  /*
+  Later rounds:
+
+  Only previous-round survivors
+  are available.
+  */
+
+  return rackets
+    .map(
+      (_, index) => {
+
+
+        if (
+          tournamentState[
+            previousRound
+          ][index] === true
+        ) {
+
+          return index;
+
         }
 
-        drawRacket(selectedIndex1, racketBox1, () => {
-          drawRacket(selectedIndex2, racketBox2, () => {
-            const link = document.createElement('a');
-            link.download = 'racket-placement.png';
-            link.href = canvas.toDataURL('image/png');
-            link.click();
-          });
-        });
+
+        return null;
+
+      }
+    )
+    .filter(
+      index =>
+        index !== null
+    );
+
+}
+
+
+
+/* ============================================================
+   GET SURVIVORS
+============================================================ */
+
+function getCurrentSurvivors(
+  round
+) {
+
+
+  return getAvailableRackets(
+    round
+  ).filter(
+    index =>
+
+      tournamentState[
+        round
+      ][index] === true
+
+  );
+
+}
+
+
+
+/* ============================================================
+   RENDER MANAGEMENT
+============================================================ */
+
+function renderManagement() {
+
+
+  const round =
+    managementRound.value;
+
+
+  const available =
+    getAvailableRackets(
+      round
+    );
+
+
+  managementList.innerHTML =
+    "";
+
+
+  /*
+  No rackets available.
+  */
+
+  if (
+    available.length === 0
+  ) {
+
+    managementList.innerHTML = `
+
+      <div class="p-4 text-sm text-gray-500">
+
+        No rackets are available for this round.
+
+      </div>
+
+    `;
+
+
+    updateRemainingCount();
+
+    return;
+
+  }
+
+
+
+  available.forEach(
+    index => {
+
+
+      const racket =
+        rackets[index];
+
+
+      const checked =
+        tournamentState[
+          round
+        ][index] === true;
+
+
+
+      const row =
+        document.createElement(
+          "label"
+        );
+
+
+      row.className = `
+
+        flex
+        items-center
+        gap-3
+        p-3
+        border-b
+        last:border-b-0
+        cursor-pointer
+        hover:bg-gray-50
+
+      `;
+
+
+
+      const checkbox =
+        document.createElement(
+          "input"
+        );
+
+
+      checkbox.type =
+        "checkbox";
+
+
+      checkbox.checked =
+        checked;
+
+
+      checkbox.className =
+        "w-5 h-5";
+
+
+
+      checkbox.addEventListener(
+        "change",
+        () => {
+
+
+          tournamentState[
+            round
+          ][index] =
+            checkbox.checked;
+
+
+          saveTournament();
+
+
+          renderManagement();
+
+
+          populateRacketDropdowns();
+
+        }
+      );
+
+
+
+      const name =
+        document.createElement(
+          "span"
+        );
+
+
+      name.textContent =
+        racket.name;
+
+
+      name.className =
+        "text-sm text-gray-800";
+
+
+
+      row.appendChild(
+        checkbox
+      );
+
+
+      row.appendChild(
+        name
+      );
+
+
+      managementList.appendChild(
+        row
+      );
+
+    }
+  );
+
+
+  updateRemainingCount();
+
+}
+
+
+
+/* ============================================================
+   REMAINING COUNT
+============================================================ */
+
+function updateRemainingCount() {
+
+
+  const round =
+    managementRound.value;
+
+
+  const available =
+    getAvailableRackets(
+      round
+    );
+
+
+  const survivors =
+    getCurrentSurvivors(
+      round
+    );
+
+
+  remainingCount.textContent =
+
+    `${survivors.length} of ${available.length} rackets remaining`;
+
+}
+
+
+
+/* ============================================================
+   POPULATE MATCHUP DROPDOWNS
+============================================================ */
+
+function populateRacketDropdowns() {
+
+
+  /*
+  Remember current selections.
+  */
+
+  const previous1 =
+    racket1Select.value;
+
+
+  const previous2 =
+    racket2Select.value;
+
+
+
+  /*
+  Clear dropdowns.
+  */
+
+  racket1Select.innerHTML = `
+
+    <option value="">
+      Select first racket
+    </option>
+
+  `;
+
+
+  racket2Select.innerHTML = `
+
+    <option value="">
+      Select second racket
+    </option>
+
+  `;
+
+
+
+  /*
+  Current round.
+  */
+
+  const round =
+    managementRound.value;
+
+
+
+  /*
+  Current survivors.
+  */
+
+  const survivors =
+    getCurrentSurvivors(
+      round
+    );
+
+
+
+  /*
+  Add survivors.
+  */
+
+  survivors.forEach(
+    index => {
+
+
+      const racket =
+        rackets[index];
+
+
+
+      const option1 =
+        document.createElement(
+          "option"
+        );
+
+
+      option1.value =
+        index;
+
+
+      option1.textContent =
+        racket.name;
+
+
+      racket1Select.appendChild(
+        option1
+      );
+
+
+
+      const option2 =
+        document.createElement(
+          "option"
+        );
+
+
+      option2.value =
+        index;
+
+
+      option2.textContent =
+        racket.name;
+
+
+      racket2Select.appendChild(
+        option2
+      );
+
+    }
+  );
+
+
+
+  /*
+  Restore previous selections
+  if still available.
+  */
+
+  if (
+    survivors.includes(
+      Number(previous1)
+    )
+  ) {
+
+    racket1Select.value =
+      previous1;
+
+  }
+
+
+  if (
+    survivors.includes(
+      Number(previous2)
+    )
+  ) {
+
+    racket2Select.value =
+      previous2;
+
+  }
+
+
+
+  updateDisplay();
+
+}
+
+
+
+/* ============================================================
+   SELECT ALL
+============================================================ */
+
+selectAllButton.addEventListener(
+  "click",
+  () => {
+
+
+    const round =
+      managementRound.value;
+
+
+    const available =
+      getAvailableRackets(
+        round
+      );
+
+
+    available.forEach(
+      index => {
+
+
+        tournamentState[
+          round
+        ][index] = true;
+
+      }
+    );
+
+
+    saveTournament();
+
+
+    renderManagement();
+
+
+    populateRacketDropdowns();
+
+  }
+);
+
+
+
+/* ============================================================
+   DESELECT ALL
+============================================================ */
+
+deselectAllButton.addEventListener(
+  "click",
+  () => {
+
+
+    const round =
+      managementRound.value;
+
+
+    const available =
+      getAvailableRackets(
+        round
+      );
+
+
+    available.forEach(
+      index => {
+
+
+        tournamentState[
+          round
+        ][index] = false;
+
+      }
+    );
+
+
+    saveTournament();
+
+
+    renderManagement();
+
+
+    populateRacketDropdowns();
+
+  }
+);
+
+
+
+/* ============================================================
+   ROUND CHANGE
+============================================================ */
+
+managementRound.addEventListener(
+  "change",
+  () => {
+
+
+    const backgroundMap = {
+
+      round1:
+        "round1.png",
+
+      round2:
+        "round2.png",
+
+      quarterfinal:
+        "quarterfinal.png",
+
+      semifinal:
+        "semifinal.png",
+
+      final:
+        "final.png"
+
+    };
+
+
+    const background =
+      backgroundMap[
+        managementRound.value
+      ];
+
+
+
+    /*
+    Automatically change
+    the background.
+    */
+
+    backgroundSelect.value =
+      background;
+
+
+
+    templateImg.onload =
+      () => {
+
+
+        renderManagement();
+
+
+        populateRacketDropdowns();
+
       };
-    });
-  </script>
+
+
+    templateImg.src =
+      `images/${background}`;
+
+  }
+);
+
+
+
+/* ============================================================
+   RESET TOURNAMENT
+============================================================ */
+
+resetButton.addEventListener(
+  "click",
+  () => {
+
+
+    const confirmed =
+      confirm(
+        "Reset the entire tournament? All rackets will be restored."
+      );
+
+
+    if (!confirmed) {
+
+      return;
+
+    }
+
+
+
+    tournamentState = {};
+
+
+
+    rounds.forEach(
+      round => {
+
+
+        tournamentState[
+          round
+        ] = {};
+
+
+        rackets.forEach(
+          (_, index) => {
+
+
+            tournamentState[
+              round
+            ][index] = true;
+
+          }
+        );
+
+      }
+    );
+
+
+
+    saveTournament();
+
+
+    renderManagement();
+
+
+    populateRacketDropdowns();
+
+  }
+);
+
+
+
+/* ============================================================
+   LOAD IMAGE
+============================================================ */
+
+function loadImage(src) {
+
+  return new Promise(
+    (resolve, reject) => {
+
+
+      const image =
+        new Image();
+
+
+      image.onload =
+        () => resolve(image);
+
+
+      image.onerror =
+        () => reject(
+          new Error(
+            "Could not load image: " +
+            src
+          )
+        );
+
+
+      image.src =
+        src;
+
+    }
+  );
+
+}
+
+
+
+/* ============================================================
+   CALCULATE RACKET SIZE
+============================================================ */
+
+function calculateRacketSize(
+  image
+) {
+
+
+  const originalWidth =
+    image.naturalWidth;
+
+
+  const originalHeight =
+    image.naturalHeight;
+
+
+
+  const scale =
+    Math.min(
+
+      STANDARD_RACKET_WIDTH /
+        originalWidth,
+
+      STANDARD_RACKET_HEIGHT /
+        originalHeight
+
+    );
+
+
+
+  const width =
+    originalWidth * scale;
+
+
+  const height =
+    originalHeight * scale;
+
+
+
+  const x =
+    (
+      STANDARD_RACKET_WIDTH -
+      width
+    ) / 2;
+
+
+  const y =
+    (
+      STANDARD_RACKET_HEIGHT -
+      height
+    ) / 2;
+
+
+
+  return {
+
+    x,
+    y,
+
+    width,
+    height
+
+  };
+
+}
+
+
+
+/* ============================================================
+   PLACE RACKET
+============================================================ */
+
+async function placeRacket(
+  index,
+  box
+) {
+
+
+  if (index === "") {
+
+    return;
+
+  }
+
+
+
+  try {
+
+
+    const racket =
+      rackets[index];
+
+
+    const image =
+      await loadImage(
+        racket.image
+      );
+
+
+
+    const racketSize =
+      calculateRacketSize(
+        image
+      );
+
+
+
+    /*
+    Standard 375 × 600 frame.
+    */
+
+    const frameScale =
+      Math.min(
+
+        box.width /
+          STANDARD_RACKET_WIDTH,
+
+        box.height /
+          STANDARD_RACKET_HEIGHT
+
+      );
+
+
+
+    const frameWidth =
+      STANDARD_RACKET_WIDTH *
+      frameScale;
+
+
+    const frameHeight =
+      STANDARD_RACKET_HEIGHT *
+      frameScale;
+
+
+
+    /*
+    Center frame inside box.
+    */
+
+    const frameX =
+      box.x +
+      (
+        box.width -
+        frameWidth
+      ) / 2;
+
+
+    const frameY =
+      box.y +
+      (
+        box.height -
+        frameHeight
+      ) / 2;
+
+
+
+    /*
+    Position racket inside frame.
+    */
+
+    const racketX =
+      frameX +
+      racketSize.x *
+      frameScale;
+
+
+    const racketY =
+      frameY +
+      racketSize.y *
+      frameScale;
+
+
+    const racketWidth =
+      racketSize.width *
+      frameScale;
+
+
+    const racketHeight =
+      racketSize.height *
+      frameScale;
+
+
+
+    /*
+    Scale for browser preview.
+    */
+
+    const displayScale =
+      templateImg.clientWidth /
+      BASE_WIDTH;
+
+
+
+    /*
+    Create image.
+    */
+
+    const img =
+      document.createElement(
+        "img"
+      );
+
+
+    img.src =
+      racket.image;
+
+
+    img.alt =
+      racket.name;
+
+
+    img.className =
+      "racket-image";
+
+
+    img.style.left =
+      `${racketX * displayScale}px`;
+
+
+    img.style.top =
+      `${racketY * displayScale}px`;
+
+
+    img.style.width =
+      `${racketWidth * displayScale}px`;
+
+
+    img.style.height =
+      `${racketHeight * displayScale}px`;
+
+
+
+    racketLayer.appendChild(
+      img
+    );
+
+
+  }
+
+  catch (error) {
+
+
+    console.error(
+      "Error placing racket:",
+      error
+    );
+
+  }
+
+}
+
+
+
+/* ============================================================
+   UPDATE DISPLAY
+============================================================ */
+
+function updateDisplay() {
+
+
+  racketLayer.innerHTML =
+    "";
+
+
+  placeRacket(
+    racket1Select.value,
+    racketBox1
+  );
+
+
+  placeRacket(
+    racket2Select.value,
+    racketBox2
+  );
+
+}
+
+
+
+/* ============================================================
+   BACKGROUND CHANGE
+============================================================ */
+
+backgroundSelect.addEventListener(
+  "change",
+  () => {
+
+
+    templateImg.onload =
+      () => {
+
+        updateDisplay();
+
+      };
+
+
+    templateImg.src =
+      `images/${backgroundSelect.value}`;
+
+  }
+);
+
+
+
+/* ============================================================
+   RACKET CHANGE
+============================================================ */
+
+racket1Select.addEventListener(
+  "change",
+  updateDisplay
+);
+
+
+racket2Select.addEventListener(
+  "change",
+  updateDisplay
+);
+
+
+
+/* ============================================================
+   WINDOW RESIZE
+============================================================ */
+
+window.addEventListener(
+  "resize",
+  updateDisplay
+);
+
+
+
+/* ============================================================
+   DOWNLOAD
+============================================================ */
+
+document
+  .getElementById(
+    "download-btn"
+  )
+  .addEventListener(
+    "click",
+    async () => {
+
+
+      try {
+
+
+        /*
+        Create canvas.
+        */
+
+        const canvas =
+          document.createElement(
+            "canvas"
+          );
+
+
+        canvas.width =
+          BASE_WIDTH;
+
+
+        canvas.height =
+          BASE_HEIGHT;
+
+
+        const ctx =
+          canvas.getContext(
+            "2d"
+          );
+
+
+
+        /*
+        Background.
+        */
+
+        const background =
+          await loadImage(
+            `images/${backgroundSelect.value}`
+          );
+
+
+        ctx.drawImage(
+          background,
+          0,
+          0,
+          BASE_WIDTH,
+          BASE_HEIGHT
+        );
+
+
+
+        /*
+        Draw racket.
+        */
+
+        async function drawRacket(
+          index,
+          box
+        ) {
+
+
+          if (index === "") {
+
+            return;
+
+          }
+
+
+
+          const racket =
+            rackets[index];
+
+
+          const image =
+            await loadImage(
+              racket.image
+            );
+
+
+
+          const racketSize =
+            calculateRacketSize(
+              image
+            );
+
+
+
+          const frameScale =
+            Math.min(
+
+              box.width /
+                STANDARD_RACKET_WIDTH,
+
+              box.height /
+                STANDARD_RACKET_HEIGHT
+
+            );
+
+
+
+          const frameWidth =
+            STANDARD_RACKET_WIDTH *
+            frameScale;
+
+
+          const frameHeight =
+            STANDARD_RACKET_HEIGHT *
+            frameScale;
+
+
+
+          const frameX =
+            box.x +
+            (
+              box.width -
+              frameWidth
+            ) / 2;
+
+
+          const frameY =
+            box.y +
+            (
+              box.height -
+              frameHeight
+            ) / 2;
+
+
+
+          const x =
+            frameX +
+            racketSize.x *
+            frameScale;
+
+
+          const y =
+            frameY +
+            racketSize.y *
+            frameScale;
+
+
+          const width =
+            racketSize.width *
+            frameScale;
+
+
+          const height =
+            racketSize.height *
+            frameScale;
+
+
+
+          ctx.drawImage(
+            image,
+            x,
+            y,
+            width,
+            height
+          );
+
+        }
+
+
+
+        /*
+        First racket.
+        */
+
+        await drawRacket(
+          racket1Select.value,
+          racketBox1
+        );
+
+
+
+        /*
+        Second racket.
+        */
+
+        await drawRacket(
+          racket2Select.value,
+          racketBox2
+        );
+
+
+
+        /*
+        Download.
+        */
+
+        const link =
+          document.createElement(
+            "a"
+          );
+
+
+        link.download =
+          "racket-placement.png";
+
+
+        link.href =
+          canvas.toDataURL(
+            "image/png"
+          );
+
+
+        link.click();
+
+
+      }
+
+      catch (error) {
+
+
+        console.error(
+          "Download error:",
+          error
+        );
+
+
+        alert(
+          "There was a problem creating the image."
+        );
+
+      }
+
+    }
+  );
+
+
+
+/* ============================================================
+   INITIALIZE PAGE
+============================================================ */
+
+renderManagement();
+
+populateRacketDropdowns();
+
+</script>
+
 
 </body>
+
 </html>
